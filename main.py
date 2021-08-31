@@ -16,6 +16,31 @@ window.geometry(f'{monitor_work_area[2] - 400}x{monitor_work_area[3] - 400}+0+0'
 
 window.resizable(False, False)
 
+photo_switch_state = [False, False] # left arrow, right arrow: pressed or not
+
+
+# called on any key pressed
+def key_pressed(event):
+    if event.keysym == 'Left':
+        if not (photo_switch_state[0] or photo_switch_state[1]):
+            manager.switch_photo('Previous')
+        photo_switch_state[0] = True
+    elif event.keysym == 'Right':
+        if not (photo_switch_state[0] or photo_switch_state[1]):
+            manager.switch_photo('Next')
+        photo_switch_state[1] = True
+
+
+# called on any key stopped being pressed
+def key_released(event):
+    if event.keysym == 'Left':
+        photo_switch_state[0] = False
+    elif event.keysym == 'Right':
+        photo_switch_state[1] = False
+
+
+window.bind('<Key>', key_pressed)
+window.bind('<KeyRelease>', key_released)
 
 # button handlers
 def choose_dir():
