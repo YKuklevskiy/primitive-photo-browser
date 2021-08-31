@@ -10,6 +10,10 @@ window.title("Photo Browser")
 monitor_work_area = GetMonitorInfo(MonitorFromPoint((0, 0))).get("Work")
 # window is resizable, but initially its a little smaller than screen size
 window.geometry(f'{monitor_work_area[2] - 40}x{monitor_work_area[3] - 40}+0+0')
+
+#while debugging
+window.geometry(f'{monitor_work_area[2] - 400}x{monitor_work_area[3] - 400}+0+0')
+
 window.resizable(False, False)
 
 
@@ -42,8 +46,8 @@ buttons_frame.update()
 
 # canvas
 canvas = Canvas(window, highlightbackground="black", highlightthickness=1)
-canvas.configure(width=window.winfo_screenwidth() - 10,
-                 height=window.winfo_screenheight() - 80 - buttons_frame.winfo_height())
+canvas.configure(width=window.winfo_width(),
+                 height=window.winfo_height() - buttons_frame.winfo_height())
 canvas.pack(fill='both', expand=True)
 print(canvas['height'])
 
