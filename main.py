@@ -52,7 +52,7 @@ def choose_photo():
 
 
 def delete_photo():
-    pass
+    manager.delete_current_photo()
 
 
 # buttons
@@ -74,7 +74,6 @@ canvas = Canvas(window, highlightbackground="black", highlightthickness=1)
 canvas.configure(width=window.winfo_width(),
                  height=window.winfo_height() - buttons_frame.winfo_height())
 canvas.pack(fill='both', expand=True)
-print(canvas['height'])
 
 manager = PhotoManager(window, canvas)
 

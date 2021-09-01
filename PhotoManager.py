@@ -2,11 +2,12 @@ from tkinter import *
 import tkinter.filedialog as fileDialog
 from PIL import ImageTk, Image, UnidentifiedImageError
 import os
+from winsort import winsort
 
 # count of images to store in cache
 # has to be odd as the image currently loaded will 
 # have equal number of next and previous images loaded in cache
-CACHE_SIZE = 11 
+CACHE_SIZE = 5
 
 class PhotoManager:
     def __init__(self, window: Tk, canvas: Canvas):
@@ -33,13 +34,11 @@ class PhotoManager:
     def _get_image(self, index):
         try: # try to open file as image
             img = Image.open(self.current_photos[index].path)
-        except UnidentifiedImageError: # display error message
+        except UnidentifiedImageError:
             return 'App could not open the image.'
-        except PermissionError: # display error message
+        except PermissionError:
             return 'Permission to open that file denied.'
-    
-        #### not here :) #### todo display a message while image is loading, check if an image is currently loading
-
+        
         # scaling to screen
         w2h = float(img.width)/img.height # width to height ratio
         canvas_size = (int(self.canvas['width']), int(self.canvas['height']))
@@ -54,11 +53,11 @@ class PhotoManager:
     # changes state, does corresponding actions
     def change_state(self, state: str):
         if state == 'Loading' and self.state != 'Loading':
-            self.state = 'Loading'
             canvas_size = (int(self.canvas['width']), int(self.canvas['height']))
             self.loading_text_instance = self.canvas.create_text(canvas_size[0]/2, canvas_size[1]/2, 
                                                    text="Please wait...", font=('Lato', 18))
             self.canvas.update()
+            self.state = 'Loading'
         elif state == 'Viewing' and self.state != 'Viewing':
             if self.loading_text_instance != None:
                 self.canvas.delete(self.loading_text_instance)
@@ -67,8 +66,9 @@ class PhotoManager:
         elif state == 'Idle' and self.state != 'Idle':
             self.change_state('Viewing')
             self.state == 'Idle'
-        
 
+
+    # initializes all containers via file/directory opening dialog
     def choose_photos(self, mode: str):
         if mode == 'dir': # choose directory
             self.current_dir = fileDialog.askdirectory(initialdir='/', title='Select directory...')
@@ -76,7 +76,7 @@ class PhotoManager:
                 return
             
             self.change_state('Loading')
-            self.current_photos = [file for file in os.scandir(self.current_dir) if file.is_file()]
+            self.current_photos = winsort([file for file in os.scandir(self.current_dir) if file.is_file()])
             for file in self.current_photos:
                 print(file)
         else: # choose a photo
@@ -87,30 +87,43 @@ class PhotoManager:
             self.change_state('Loading')
             file_name = temp.name.split('/')[-1]
             self.current_dir = os.path.dirname(temp.name)
-            self.current_photos = [file for file in os.scandir(self.current_dir) if file.is_file()]
+            self.current_photos = winsort([file for file in os.scandir(self.current_dir) if file.is_file()])
             for i in range(len(self.current_photos)):
                 if(self.current_photos[i].name == file_name):
                     self.current_index = i
                     break
         
-        print(self.current_photos[self.current_index].path)
+        # print(self.current_photos[self.current_index].path)
         self.cache_images()
     
 
+    # moves currently selected photo to recycle bin
     def delete_current_photo(self):
-        pass
+        # pop everything, if left len < cache then rotate cache, else refill cache, change index, update canvas
+        if len(self.current_photos) == 0:
+            return
+        self.current_photos.pop(self.current_index)
+        if CACHE_SIZE > len(self.current_photos): # less files than cache length
+            self._cached_images.pop(len(self._cached_images)//2)
+            if(len(self.current_photos) % 2 == 1): # rotating cache if needed
+                self._cached_images.append(self._cached_images.pop(0))
+            if len(self.current_photos) == self.current_index:
+                self.current_index -= 1
+        else:
+            if len(self.current_photos) == self.current_index:
+                self.current_index = (self.current_index - 1) % len(self.current_photos)
+            index = (self.current_index+len(self._cached_images)//2) % len(self.current_photos)
+            self._cached_images.pop(len(self._cached_images)//2)
+            self._cached_images.append(self._get_image(index))
+        self.update_canvas()
 
 
+    # switches current photo to next/previous photo
     def switch_photo(self, direction: str):
         if len(self.current_photos) < 2 or self.state == 'Loading':
             return
-        
-        print(self.current_index)
-        
-        # todo issue: when changing the arrow pressed (from left to right or from right to left consequentally)
-        # index goes the previuosly pressed way and list shifts to the other direction, 
-        # making the image stay the same for 1 direction change
-
+        print(f'Initial switch information: \n index = {self.current_index} \n cache = \
+                {self._cached_images} \n cache_size = {len(self._cached_images)}')
         if direction == 'Previous':
             if len(self.current_photos) < CACHE_SIZE: # no caching required, everything already is cached
                 self._cached_images.insert(0, self._cached_images.pop())
@@ -137,9 +150,11 @@ class PhotoManager:
                 index = (self.current_index + CACHE_SIZE//2) % len(self.current_photos)
                 self._cached_images[-1] = self._get_image(index)
                 print("finished caching image")
+        print(f'Afterwards switch information: \n index = {self.current_index} \n cache = \
+                {self._cached_images} \n cache_size = {len(self._cached_images)}')
 
     
-
+    # caches images for loading optimization, views initial photo
     def cache_images(self):
         if len(self.current_photos) == 0:
             self.change_state('Idle')
@@ -161,9 +176,13 @@ class PhotoManager:
         print(self._cached_images)
 
 
+    # loads and views current photo
     def update_canvas(self):
         if self._current_instance != None:
             self.canvas.delete(self._current_instance)
+            self._current_instance = None
+        if len(self.current_photos) == 0: # no photos to show
+            return
         canvas_size = (int(self.canvas['width']), int(self.canvas['height']))
         if not isinstance(self._cached_images[len(self._cached_images)//2], ImageTk.PhotoImage):
             error_text = 'Error'
@@ -178,6 +197,5 @@ class PhotoManager:
             self.change_state('Viewing')
 
         self.canvas.update()
-        print("finished updating canv")
 
     # todo have to use multithreading to load images in cache
