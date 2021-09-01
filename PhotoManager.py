@@ -76,7 +76,7 @@ class PhotoManager:
                 return
             
             self.change_state('Loading')
-            self.current_photos = winsort([file for file in os.scandir(self.current_dir) if file.is_file()])
+            self.current_photos = winsort([file for file in os.scandir(self.current_dir) if file.is_file()], 'name')
             for file in self.current_photos:
                 print(file)
         else: # choose a photo
@@ -87,7 +87,7 @@ class PhotoManager:
             self.change_state('Loading')
             file_name = temp.name.split('/')[-1]
             self.current_dir = os.path.dirname(temp.name)
-            self.current_photos = winsort([file for file in os.scandir(self.current_dir) if file.is_file()])
+            self.current_photos = winsort([file for file in os.scandir(self.current_dir) if file.is_file()], 'name')
             for i in range(len(self.current_photos)):
                 if(self.current_photos[i].name == file_name):
                     self.current_index = i
