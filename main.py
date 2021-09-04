@@ -3,6 +3,14 @@ from win32api import GetMonitorInfo, MonitorFromPoint
 from PhotoManager import PhotoManager
 from send2trash import send2trash
 
+
+'''
+
+Project uses pywin32 and send2trash modules.
+
+'''
+
+
 window = Tk()
 window.title("Photo Browser")
 # window.attributes('-fullscreen', True)
@@ -55,19 +63,38 @@ def delete_photo():
     manager.delete_current_photo()
 
 
+def rotate_anticlockwise():
+    pass
+
+
+def rotate_clockwise():
+    pass
+
+
 # buttons
+# button frame consists of two frames each stuck to sides of the window
 buttons_frame = Frame(window)
-choose_dir_button = Button(buttons_frame, text='Choose directory...', relief='groove', 
+left_frame = Frame(buttons_frame)
+right_frame = Frame(buttons_frame)
+
+choose_dir_button = Button(left_frame, text='Choose directory...', relief='groove', 
                            font=('Lato', 14), command=choose_dir)
-choose_photo_button = Button(buttons_frame, text='Choose photo...', relief='groove', 
+choose_photo_button = Button(left_frame, text='Choose photo...', relief='groove', 
                              font=('Lato', 14), command=choose_photo)
-delete_button = Button(buttons_frame, text='Delete photo', bg='red', fg='white', font=('Lato', 14),
+delete_button = Button(left_frame, text='Delete photo', bg='red', fg='white', font=('Lato', 14),
                        relief='raised', activebackground='red', command=delete_photo)
 choose_dir_button.grid(column=0, row=0)
 choose_photo_button.grid(column=1, row=0)
 delete_button.grid(column=2, row=0)
+
+aclockwise_rotate_button = Button(right_frame, text = 'left_r', image=None, command=rotate_anticlockwise)
+clockwise_rotate_button = Button(right_frame, text = 'right_r', image=None, command=rotate_clockwise)
+aclockwise_rotate_button.grid(column=0, row=0)
+clockwise_rotate_button.grid(column=1, row=0)
+left_frame.pack(fill=X, side=LEFT)
+right_frame.pack(fill=X, side=RIGHT)
 buttons_frame.pack(fill=X)
-buttons_frame.update()
+
 
 # canvas
 canvas = Canvas(window, highlightbackground="black", highlightthickness=1)

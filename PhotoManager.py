@@ -1,5 +1,6 @@
 from tkinter import *
 import tkinter.filedialog as fileDialog
+from tkinter.messagebox import askyesno
 from PIL import ImageTk, Image, UnidentifiedImageError
 import os
 from winsort import winsort
@@ -7,7 +8,7 @@ from winsort import winsort
 # count of images to store in cache
 # has to be odd as the image currently loaded will 
 # have equal number of next and previous images loaded in cache
-CACHE_SIZE = 5
+CACHE_SIZE = 11
 
 class PhotoManager:
     def __init__(self, window: Tk, canvas: Canvas):
@@ -29,6 +30,8 @@ class PhotoManager:
 
         """
         self.state = 'Idle'
+
+        self.window.update()
 
     # returns ImageTk.PhotoImage of current_photos[index], or str if error occured
     def _get_image(self, index):
@@ -102,6 +105,9 @@ class PhotoManager:
         # pop everything, if left len < cache then rotate cache, else refill cache, change index, update canvas
         if len(self.current_photos) == 0:
             return
+        if not askyesno('Delete', 'Are you sure you want to delete that photo?'):
+            return
+        # todo implement send2trash usage after all other features
         self.current_photos.pop(self.current_index)
         if CACHE_SIZE > len(self.current_photos): # less files than cache length
             self._cached_images.pop(len(self._cached_images)//2)
@@ -115,6 +121,7 @@ class PhotoManager:
             index = (self.current_index+len(self._cached_images)//2) % len(self.current_photos)
             self._cached_images.pop(len(self._cached_images)//2)
             self._cached_images.append(self._get_image(index))
+        
         self.update_canvas()
 
 
